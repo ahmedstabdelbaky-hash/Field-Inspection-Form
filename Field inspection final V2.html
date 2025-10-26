@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,117 +106,63 @@
 </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbw5AVNuqjZftY11Ba48LkqWw2FFce50q37fuCE59t_T2uksWJ2r9b_NH9D6iraG9T4Y/exec";
-
-// Auto-fill today's date
+// ✅ Auto-fill today's date
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("todayDate").value = today;
 });
 
-// Bullets auto system
+// ✅ Bullets auto system
 document.querySelectorAll('[data-bullets="true"]').forEach(box => {
-  box.addEventListener('focus', () => {
-    if (box.innerHTML.trim() === '') box.innerHTML = '• ';
-  });
-
+  box.addEventListener('focus', () => { if (box.innerHTML.trim() === '') box.innerHTML = '• '; });
   box.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.execCommand('insertHTML', false, '<br>• ');
-    } else if (e.key === 'Backspace' && box.innerHTML.endsWith('• ')) {
-      e.preventDefault();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertHTML', false, '<br>• '); }
+    else if (e.key === 'Backspace' && box.innerHTML.endsWith('• ')) e.preventDefault();
   });
 });
 
-// Save PDF locally
+// ✅ Save as single-page portrait PDF
 async function savePDFLocal() {
   const element = document.getElementById('formWrapper');
   const canvas = await html2canvas(element, { scale: 4, useCORS: true, scrollY: 0 });
   const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
   const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 15;
-
-  let imgWidth = pageWidth - margin * 2;
-  let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  if (imgHeight > pageHeight - margin * 2) {
-    const scale = (pageHeight - margin * 2) / imgHeight;
-    imgWidth *= scale;
-    imgHeight *= scale;
-  }
-
-  const xOffset = (pageWidth - imgWidth) / 2;
-  const yOffset = (pageHeight - imgHeight) / 2;
-
-  pdf.addImage(imgData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight, '', 'FAST');
+  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
   pdf.save('Field_Inspection.pdf');
 }
 
-// Save PDF & Upload to Google Drive
+// ✅ Save & Upload to Google Drive
 async function saveAndUpload() {
   const element = document.getElementById('formWrapper');
   const canvas = await html2canvas(element, { scale: 4, useCORS: true, scrollY: 0 });
   const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
   const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 15;
-
-  let imgWidth = pageWidth - margin * 2;
-  let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  if (imgHeight > pageHeight - margin * 2) {
-    const scale = (pageHeight - margin * 2) / imgHeight;
-    imgWidth *= scale;
-    imgHeight *= scale;
-  }
-
-  const xOffset = (pageWidth - imgWidth) / 2;
-  const yOffset = (pageHeight - imgHeight) / 2;
-
-  pdf.addImage(imgData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight, '', 'FAST');
-
-  // Generate file name
-  const date = new Date().toISOString().split("T")[0];
-  const fileNumber = localStorage.getItem('fieldInspectNumber') || 1;
-  const fileName = `Field Inspect No. ${fileNumber} - ${date}.pdf`;
+  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  const pdfBase64 = pdf.output('datauristring').split(',')[1];
+  const fileName = `Field Inspect No.1 - ${document.getElementById('todayDate').value}.pdf`;
 
   try {
-    const pdfBase64 = pdf.output('datauristring').split(',')[1];
-
-    const response = await fetch(scriptURL, {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbzTNs4-nl_h7ku994vwj99UnObRcCi8nzhTg9N3Pb6DkPS6PKDvkPSBqqpB8chii3t9Wg/exec', {
       method: 'POST',
-      body: JSON.stringify({ pdfBase64, fileName }),
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdfBase64, fileName })
     });
-
     const result = await response.json();
-    if(result.status === "success"){
-      alert("تم رفع الـ PDF بنجاح!");
-      localStorage.setItem('fieldInspectNumber', Number(fileNumber) + 1);
-    } else {
-      alert("حدث خطأ: " + result.message);
-    }
-  } catch(err){
-    alert("حدث خطأ أثناء الرفع: " + err.message);
+    alert(result.status);
+  } catch (err) {
+    alert("Error: " + err.message);
   }
 }
 
-// Clear form
+// ✅ Clear form function
 function clearForm() {
   document.querySelectorAll('input, select').forEach(el => {
     if (el.type === 'date') el.value = new Date().toISOString().split("T")[0];
     else if (el.type === 'time' || el.type === 'text' || el.type === 'number') el.value = '';
     else if (el.tagName === 'SELECT') el.selectedIndex = 0;
   });
-
-  document.querySelectorAll('.bullet-box').forEach(box => box.innerHTML = '');
+  document.querySelectorAll('.bullet-box').forEach(box => { box.innerHTML = ''; });
 }
 </script>
 </body>
