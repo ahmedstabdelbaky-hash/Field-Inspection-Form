@@ -7,23 +7,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  body { font-family: Arial, sans-serif; background: white; margin: 0; padding: 0; display: flex; justify-content: center; }
-  #formWrapper { width: 210mm; padding: 15mm; background: white; box-sizing: border-box; }
-  h2 { text-align: center; margin-bottom: 20px; text-transform: uppercase; }
-  label { font-weight: bold; }
-  .section { margin-bottom: 20px; }
-  .inline-inputs { display: flex; justify-content: space-between; gap: 10px; }
-  input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-  .bullet-box { width: 100%; min-height: 80px; border: 1px solid #ccc; border-radius: 4px; padding: 6px 10px; box-sizing: border-box; outline: none; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  table, th, td { border: 1px solid #ccc; }
-  th, td { padding: 6px; text-align: left; }
-  .narrow-input { width: 45%; }
-  .buttons { text-align: center; margin-top: 25px; }
-  button { padding: 10px 20px; margin: 5px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; background-color: #007bff; color: white; }
-  button:hover { background-color: #0056b3; }
-  .clear-btn { background-color: #dc3545; }
-  .clear-btn:hover { background-color: #a71d2a; }
+  body { font-family: Arial; background: white; display: flex; justify-content: center; margin:0; }
+  #formWrapper { width:210mm; padding:15mm; background:white; box-sizing:border-box; }
+  h2 { text-align:center; margin-bottom:20px; text-transform:uppercase; }
+  label { font-weight:bold; }
+  .section { margin-bottom:20px; }
+  .inline-inputs { display:flex; gap:10px; }
+  input, select { width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; }
+  .bullet-box { width:100%; min-height:80px; border:1px solid #ccc; border-radius:4px; padding:6px; outline:none; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th, td { border:1px solid #ccc; padding:6px; text-align:left; }
+  .narrow-input { width:45%; }
+  .buttons { text-align:center; margin-top:25px; }
+  button { padding:10px 20px; margin:5px; font-weight:bold; border:none; border-radius:6px; cursor:pointer; background-color:#007bff; color:white; }
+  button:hover { background-color:#0056b3; }
+  .clear-btn { background-color:#dc3545; }
+  .clear-btn:hover { background-color:#a71d2a; }
 </style>
 </head>
 <body>
@@ -31,16 +30,16 @@
   <h2>Field Inspection</h2>
 
   <div class="section inline-inputs">
-    <div><label>Contractor's Name:</label><input type="text"></div>
-    <div><label>Project Name:</label><input type="text"></div>
+    <div><label>Contractor's Name:</label><input type="text" id="contractor"></div>
+    <div><label>Project Name:</label><input type="text" id="project"></div>
     <div><label>Date:</label><input type="date" id="todayDate"></div>
   </div>
 
   <div class="section inline-inputs">
-    <div><label>Time of Inspection:</label><input type="time"></div>
+    <div><label>Time of Inspection:</label><input type="time" id="inspectionTime"></div>
     <div>
       <label>Weather:</label>
-      <select>
+      <select id="weather">
         <option value="">Select</option>
         <option>Clear</option>
         <option>Rain</option>
@@ -53,18 +52,18 @@
   </div>
 
   <div class="section inline-inputs">
-    <div class="narrow-input"><label>Number of Supervisors:</label><input type="number" min="0"></div>
-    <div class="narrow-input"><label>Number of Skilled Workers:</label><input type="number" min="0"></div>
+    <div class="narrow-input"><label>Number of Supervisors:</label><input type="number" min="0" id="numSupervisors"></div>
+    <div class="narrow-input"><label>Number of Skilled Workers:</label><input type="number" min="0" id="numWorkers"></div>
   </div>
 
   <div class="section">
     <label>Equipments:</label>
     <table>
       <tr><th>Equipment</th><th>Nos</th></tr>
-      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
-      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
-      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
-      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
+      <tr><td><input list="equipList" id="equip1"></td><td><input type="number" min="0" id="equipNo1"></td></tr>
+      <tr><td><input list="equipList" id="equip2"></td><td><input type="number" min="0" id="equipNo2"></td></tr>
+      <tr><td><input list="equipList" id="equip3"></td><td><input type="number" min="0" id="equipNo3"></td></tr>
+      <tr><td><input list="equipList" id="equip4"></td><td><input type="number" min="0" id="equipNo4"></td></tr>
     </table>
     <datalist id="equipList">
       <option value="Excavator">
@@ -75,27 +74,27 @@
 
   <div class="section">
     <label>Location of Inspection:</label>
-    <div class="bullet-box" contenteditable="true"></div>
+    <div class="bullet-box" contenteditable="true" id="location"></div>
   </div>
 
   <div class="section">
     <label>Work Performed:</label>
-    <div class="bullet-box" contenteditable="true" data-bullets="true"></div>
+    <div class="bullet-box" contenteditable="true" id="work"></div>
   </div>
 
   <div class="section">
     <label>Comments and Actions:</label>
-    <div class="bullet-box" contenteditable="true" data-bullets="true"></div>
+    <div class="bullet-box" contenteditable="true" id="comments"></div>
   </div>
 
   <div class="section">
     <label>Issues:</label>
-    <div class="bullet-box" contenteditable="true" data-bullets="true"></div>
+    <div class="bullet-box" contenteditable="true" id="issues"></div>
   </div>
 
   <div class="section narrow-input">
     <label>Inspected By:</label>
-    <input type="text">
+    <input type="text" id="inspector">
   </div>
 
   <div class="buttons">
@@ -106,41 +105,45 @@
 </div>
 
 <script>
-// ✅ Auto-fill today's date
 document.addEventListener("DOMContentLoaded", () => {
-  const today = new Date().toISOString().split("T")[0];
-  document.getElementById("todayDate").value = today;
+  document.getElementById("todayDate").value = new Date().toISOString().split("T")[0];
 });
 
-// ✅ Bullets auto system
-document.querySelectorAll('[data-bullets="true"]').forEach(box => {
-  box.addEventListener('focus', () => { if (box.innerHTML.trim() === '') box.innerHTML = '• '; });
-  box.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertHTML', false, '<br>• '); }
-    else if (e.key === 'Backspace' && box.innerHTML.endsWith('• ')) e.preventDefault();
-  });
-});
-
-// ✅ Save as single-page portrait PDF
 async function savePDFLocal() {
   const element = document.getElementById('formWrapper');
   const canvas = await html2canvas(element, { scale: 4, useCORS: true, scrollY: 0 });
   const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
   const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const usableWidth = pageWidth - margin * 2;
+  const usableHeight = pageHeight - margin * 2;
+  let imgWidth = usableWidth;
+  let imgHeight = (canvas.height * imgWidth) / canvas.width;
+  if (imgHeight > usableHeight) imgWidth *= usableHeight / imgHeight;
+  pdf.addImage(imgData, 'JPEG', (pageWidth - imgWidth)/2, (pageHeight - imgHeight)/2, imgWidth, imgHeight, '', 'FAST');
   pdf.save('Field_Inspection.pdf');
 }
 
-// ✅ Save & Upload to Google Drive
 async function saveAndUpload() {
   const element = document.getElementById('formWrapper');
   const canvas = await html2canvas(element, { scale: 4, useCORS: true, scrollY: 0 });
-  const imgData = canvas.toDataURL('image/jpeg', 1.0);
   const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-  pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  const imgData = canvas.toDataURL('image/jpeg', 1.0);
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const usableWidth = pageWidth - margin * 2;
+  const usableHeight = pageHeight - margin * 2;
+  let imgWidth = usableWidth;
+  let imgHeight = (canvas.height * imgWidth) / canvas.width;
+  if (imgHeight > usableHeight) imgWidth *= usableHeight / imgHeight;
+  pdf.addImage(imgData, 'JPEG', (pageWidth - imgWidth)/2, (pageHeight - imgHeight)/2, imgWidth, imgHeight, '', 'FAST');
+
   const pdfBase64 = pdf.output('datauristring').split(',')[1];
-  const fileName = `Field Inspect No.1 - ${document.getElementById('todayDate').value}.pdf`;
+  const dateStr = document.getElementById("todayDate").value;
+  const fileName = `Field Inspect No.${Date.now()} - ${dateStr}.pdf`;
 
   try {
     const response = await fetch('https://script.google.com/macros/s/AKfycbzTNs4-nl_h7ku994vwj99UnObRcCi8nzhTg9N3Pb6DkPS6PKDvkPSBqqpB8chii3t9Wg/exec', {
@@ -148,21 +151,20 @@ async function saveAndUpload() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pdfBase64, fileName })
     });
+
     const result = await response.json();
     alert(result.status);
   } catch (err) {
-    alert("Error: " + err.message);
+    alert('Error: ' + err.message);
   }
 }
 
-// ✅ Clear form function
 function clearForm() {
   document.querySelectorAll('input, select').forEach(el => {
     if (el.type === 'date') el.value = new Date().toISOString().split("T")[0];
-    else if (el.type === 'time' || el.type === 'text' || el.type === 'number') el.value = '';
-    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
   });
-  document.querySelectorAll('.bullet-box').forEach(box => { box.innerHTML = ''; });
+  document.querySelectorAll('.bullet-box').forEach(box => box.innerHTML = '');
 }
 </script>
 </body>
