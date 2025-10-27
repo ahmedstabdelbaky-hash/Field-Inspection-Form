@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Inspection Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f8f9fa;
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 100px;
+    }
+
+    .short {
+      width: 48%;
+      display: inline-block;
+    }
+
+    .buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 18px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media print {
+      button {
+        display: none;
+      }
+      body {
+        margin: 0;
+        background: white;
+      }
+    }
+
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+
+    [contenteditable="true"]:focus {
+      outline: 2px solid #007bff;
+    }
+  </style>
+</head>
+<body>
+  <h2>Field Inspection Report</h2>
+
+  <label>Date:</label>
+  <input type="text" id="date" readonly>
+
+  <label>Location of Inspection:</label>
+  <textarea id="location" placeholder="Enter location details..."></textarea>
+
+  <label>Work Performed:</label>
+  <div id="work" contenteditable="true"></div>
+
+  <label>Comments and Actions:</label>
+  <div id="comments" contenteditable="true"></div>
+
+  <label>Issues:</label>
+  <div id="issues" contenteditable="true"></div>
+
+  <div class="short">
+    <label>Number of Supervisors:</label>
+    <input type="number" id="supervisors">
+  </div>
+
+  <div class="short" style="float: right;">
+    <label>Number of Skilled Workers:</label>
+    <input type="number" id="skilled">
+  </div>
+
+  <div style="clear: both;"></div>
+
+  <label>Equipment:</label>
+  <table border="1" width="100%" cellspacing="0" cellpadding="5">
+    <tr><th>Equipment</th><th>Nos</th></tr>
+    <tr>
+      <td><input list="equipList" placeholder="Select or type..."></td>
+      <td><input type="number"></td>
+    </tr>
+    <tr>
+      <td><input list="equipList" placeholder="Select or type..."></td>
+      <td><input type="number"></td>
+    </tr>
+    <tr>
+      <td><input list="equipList" placeholder="Select or type..."></td>
+      <td><input type="number"></td>
+    </tr>
+    <tr>
+      <td><input list="equipList" placeholder="Select or type..."></td>
+      <td><input type="number"></td>
+    </tr>
+  </table>
+
+  <datalist id="equipList">
+    <option value="Excavator">
+    <option value="Compactor">
+    <option value="Truck">
+  </datalist>
+
+  <label>Inspected By:</label>
+  <input type="text" id="inspectedBy">
+
+  <div class="buttons">
+    <button onclick="savePDF()">Save PDF</button>
+    <button onclick="saveAndUpload()">Save & Upload</button>
+    <button onclick="clearForm()">Clear</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    document.getElementById("date").value = new Date().toISOString().split('T')[0];
+
+    function clearForm() {
+      document.querySelectorAll("input, textarea, [contenteditable='true']").forEach(el => {
+        if (el.type !== "button" && el.id !== "date") el.value = el.textContent = "";
+      });
+    }
+
+    async function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ format: 'a4', unit: 'pt' });
+      const page = document.body.cloneNode(true);
+
+      page.querySelectorAll("button").forEach(btn => btn.remove());
+      const canvas = await html2canvas(page, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      return pdf;
+    }
+
+    async function savePDF() {
+      const pdf = await generatePDF();
+      pdf.save("Field_Inspection_Report.pdf");
+    }
+
+    async function saveAndUpload() {
+      const pdf = await generatePDF();
+      const pdfBlob = pdf.output("blob");
+
+      const formData = new FormData();
+      formData.append("file", pdfBlob);
+
+      try {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbxrgvRbUN-SeqWmfb6WKZzNHvev02dV4elxuzpb7ed_ao6NW3Lv1nrlyJRV_czja8uQNg/exec", {
+          method: "POST",
+          body: pdfBlob
+        });
+
+        const result = await response.json();
+        if (result.fileUrl) {
+          alert("File uploaded successfully!\n\nOpen: " + result.fileUrl);
+        } else {
+          alert("Upload failed: " + (result.error || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Upload failed: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
