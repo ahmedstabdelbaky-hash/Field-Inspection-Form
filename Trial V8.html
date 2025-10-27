@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Survey Sheet</title>
+
+<!-- مكتبات الطباعة و PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+  }
+
+  .container {
+    border: 2px solid #000;
+    padding: 20px;
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    background: white;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .section {
+    margin-bottom: 15px;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 5px;
+    margin-top: 3px;
+    box-sizing: border-box;
+  }
+
+  .button-container {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  button {
+    background: #007bff;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    margin: 5px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  /* اخفاء الازرار وقت الطباعة */
+  @media print {
+    .button-container {
+      display: none;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="container" id="survey-form">
+    <h2>Site Survey Sheet</h2>
+
+    <div class="section">
+      <label>Project Name:</label>
+      <input type="text" id="projectName">
+    </div>
+
+    <div class="section">
+      <label>Location:</label>
+      <input type="text" id="location">
+    </div>
+
+    <div class="section">
+      <label>Inspected By:</label>
+      <input type="text" id="inspectedBy">
+    </div>
+
+    <div class="section">
+      <label>Notes:</label>
+      <textarea id="notes" rows="5"></textarea>
+    </div>
+  </div>
+
+  <div class="button-container">
+    <button onclick="savePDF()">Save PDF</button>
+    <button onclick="saveAndUpload()">Save PDF & Upload</button>
+    <button onclick="clearForm()">Clear</button>
+  </div>
+
+<script>
+  async function savePDF() {
+    const element = document.getElementById("survey-form");
+    const canvas = await html2canvas(element, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jspdf.jsPDF("p", "mm", "a4");
+    const pdfWidth = 210;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+    pdf.save("SiteSurvey.pdf");
+  }
+
+  async function saveAndUpload() {
+    try {
+      const element = document.getElementById("survey-form");
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jspdf.jsPDF("p", "mm", "a4");
+      const pdfWidth = 210;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+      const pdfBase64 = btoa(
+        new Uint8Array(pdf.output("arraybuffer"))
+          .reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
+
+      const response = await fetch("https://script.google.com/macros/s/AKfycbxl1We_AjB1vjX0nc0LjnYpxXTP_FcFD1cwqyZN5vLNAx-fuZLesk3Lp5ekUQRzXvDQ/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: "SiteSurvey_" + new Date().toISOString() + ".pdf",
+          pdfBase64: pdfBase64
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        alert(`✅ ${result.message}\n📁 View File: ${result.fileUrl}`);
+      } else {
+        alert(`❌ Upload failed: ${result.message}`);
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error: " + err.message);
+    }
+  }
+
+  function clearForm() {
+    document.getElementById("projectName").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("inspectedBy").value = "";
+    document.getElementById("notes").value = "";
+  }
+</script>
+</body>
+</html>
