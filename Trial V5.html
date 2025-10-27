@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Inspection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: white;
+      color: #000;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    label {
+      display: inline-block;
+      width: 200px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input, select, textarea {
+      width: calc(100% - 210px);
+      padding: 5px;
+      margin-bottom: 10px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    table, th, td {
+      border: 1px solid #999;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    .buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    @media print {
+      .buttons { display: none; }
+      body {
+        margin: 0;
+        padding: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>Field Inspection</h2>
+
+  <label>Contractor's Name:</label><input type="text" id="contractorName"><br>
+  <label>Project Name:</label><input type="text" id="projectName"><br>
+  <label>Date:</label><input type="date" id="date"><br>
+
+  <label>Time of Inspection:</label><input type="time" id="time"><br>
+  <label>Weather:</label>
+  <select id="weather">
+    <option value="">Select</option>
+    <option>Clear</option>
+    <option>Rain</option>
+    <option>Mist</option>
+    <option>Hot</option>
+    <option>Cold</option>
+    <option>Warm</option>
+  </select><br>
+
+  <label>Number of Supervisors:</label><input type="number" id="supervisors"><br>
+  <label>Number of Skilled Workers:</label><input type="number" id="skilledWorkers"><br>
+
+  <h3>Equipments</h3>
+  <table id="equipmentsTable">
+    <tr><th>Equipment</th><th>Nos</th></tr>
+    <tr><td><input list="equipList" placeholder="Select or type..."><datalist id="equipList"><option>Excavator</option><option>Compactor</option><option>Truck</option></datalist></td><td><input type="number"></td></tr>
+    <tr><td><input list="equipList"></td><td><input type="number"></td></tr>
+    <tr><td><input list="equipList"></td><td><input type="number"></td></tr>
+    <tr><td><input list="equipList"></td><td><input type="number"></td></tr>
+  </table>
+
+  <h3>Location of Inspection</h3>
+  <textarea id="location"></textarea>
+
+  <h3>Work Performed</h3>
+  <textarea id="workPerformed" placeholder="• Type here..." oninput="addBullets(this)"></textarea>
+
+  <h3>Comments and Actions</h3>
+  <textarea id="comments" placeholder="• Type here..." oninput="addBullets(this)"></textarea>
+
+  <h3>Issues</h3>
+  <textarea id="issues" placeholder="• Type here..." oninput="addBullets(this)"></textarea>
+
+  <label>Inspected By:</label><input type="text" id="inspectedBy" style="width:200px;"><br>
+
+  <div class="buttons">
+    <button onclick="savePDF()">Save PDF</button>
+    <button onclick="uploadToDrive()">Save PDF & Upload</button>
+    <button onclick="clearForm()">Clear</button>
+  </div>
+
+  <p id="message" style="text-align:center; color:green; font-weight:bold;"></p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    document.getElementById("date").valueAsDate = new Date();
+
+    function addBullets(el) {
+      if (el.value.length === 0) el.value = "• ";
+      if (el.value.slice(-1) === "\n") el.value += "• ";
+    }
+
+    function clearForm() {
+      document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
+      document.getElementById("date").valueAsDate = new Date();
+      document.getElementById("message").innerText = "";
+    }
+
+    function savePDF() {
+      const element = document.body.cloneNode(true);
+      element.querySelector('.buttons').remove();
+      html2pdf().set({
+        margin: 10,
+        filename: `Field_Inspection_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(element).save();
+    }
+
+    async function uploadToDrive() {
+      const element = document.body.cloneNode(true);
+      element.querySelector('.buttons').remove();
+      const opt = {
+        margin: 10,
+        filename: `Field_Inspection_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+
+      const formData = new FormData();
+      formData.append('file', pdfBlob, opt.filename);
+
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbzYosaG_mI4aR4viH2PKtafCSHCnboaCR3E0tHIsVxDtojJsdshNlZ5i4hOJH_RjPrWyA/exec', {
+          method: 'POST',
+          body: formData,
+          mode: 'cors'
+        });
+        const result = await response.json();
+        if (result.fileUrl) {
+          document.getElementById("message").innerHTML = `✅ Uploaded Successfully: <a href="${result.fileUrl}" target="_blank">Open File</a>`;
+        } else {
+          document.getElementById("message").innerText = "❌ Upload failed.";
+        }
+      } catch (err) {
+        document.getElementById("message").innerText = "❌ Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
