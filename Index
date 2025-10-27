@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Inspection</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0 auto;
+      padding: 20px;
+      max-width: 800px;
+      background: white;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 5px;
+      text-align: left;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button:hover {
+      background-color: #004c99;
+    }
+    .short-input {
+      width: 50%;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <h2>Field Inspection Form</h2>
+
+  <div class="section">
+    <label>Contractor's Name</label>
+    <input type="text" id="contractorName">
+
+    <label>Project Name</label>
+    <input type="text" id="projectName">
+
+    <label>Date</label>
+    <input type="date" id="dateField">
+  </div>
+
+  <div class="section">
+    <label>Time of Inspection</label>
+    <input type="time" id="timeOfInspection">
+
+    <label>Weather</label>
+    <select id="weather">
+      <option>Clear</option>
+      <option>Rain</option>
+      <option>Mist</option>
+      <option>Hot</option>
+      <option>Cold</option>
+      <option>Warm</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <label>Contractor's Manpower</label>
+    <label>Number of Supervisors</label>
+    <input type="number" id="numSupervisors" class="short-input">
+
+    <label>Number of Skilled Workers</label>
+    <input type="number" id="numSkilled" class="short-input">
+  </div>
+
+  <div class="section">
+    <label>Equipments</label>
+    <table>
+      <tr>
+        <th>Equipment</th>
+        <th>Nos</th>
+      </tr>
+      <tr>
+        <td><input list="equipments" placeholder="Select or type"></td>
+        <td><input type="number" min="0"></td>
+      </tr>
+      <tr>
+        <td><input list="equipments" placeholder="Select or type"></td>
+        <td><input type="number" min="0"></td>
+      </tr>
+      <tr>
+        <td><input list="equipments" placeholder="Select or type"></td>
+        <td><input type="number" min="0"></td>
+      </tr>
+      <tr>
+        <td><input list="equipments" placeholder="Select or type"></td>
+        <td><input type="number" min="0"></td>
+      </tr>
+    </table>
+    <datalist id="equipments">
+      <option value="Excavator">
+      <option value="Compactor">
+      <option value="Truck">
+    </datalist>
+  </div>
+
+  <div class="section">
+    <label>Location of Inspection</label>
+    <textarea id="location"></textarea>
+  </div>
+
+  <div class="section">
+    <label>Work Performed</label>
+    <textarea id="workPerformed"></textarea>
+  </div>
+
+  <div class="section">
+    <label>Comments and Actions</label>
+    <textarea id="comments"></textarea>
+  </div>
+
+  <div class="section">
+    <label>Issues</label>
+    <textarea id="issues"></textarea>
+  </div>
+
+  <div class="section">
+    <label>Inspected By</label>
+    <input type="text" id="inspectedBy" class="short-input">
+  </div>
+
+  <div>
+    <button id="savePDFBtn">Save PDF</button>
+    <button id="saveUploadBtn">Save PDF & Upload</button>
+    <button id="clearBtn" style="background-color:#999;">Clear</button>
+  </div>
+
+  <script>
+    // التاريخ التلقائي
+    document.getElementById("dateField").valueAsDate = new Date();
+
+    // الزرار بتاع Clear
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      document.querySelectorAll('input, textarea, select').forEach(el => el.value = '');
+      document.getElementById("dateField").valueAsDate = new Date();
+    });
+
+    // حفظ PDF محلي
+    document.getElementById('savePDFBtn').addEventListener('click', async () => {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+      await html2canvas(document.body, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 595.28;
+        const pageHeight = 841.89;
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      });
+
+      pdf.save(`Field_Inspection_${new Date().toISOString().slice(0,10)}.pdf`);
+    });
+
+    // حفظ PDF ورفعه على Google Drive
+    document.getElementById('saveUploadBtn').addEventListener('click', async () => {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+      await html2canvas(document.body, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 595.28;
+        const pageHeight = 841.89;
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      });
+
+      const pdfData = pdf.output('datauristring').split(',')[1];
+      const filename = `Field_Inspection_${new Date().toISOString().slice(0,10)}.pdf`;
+
+      const formData = new FormData();
+      formData.append('fileData', pdfData);
+      formData.append('filename', filename);
+
+      const uploadUrl = "https://script.google.com/macros/s/AKfycbxHQZQGXdtwC0uMo_UgT6CL7LwHAOzwmBJdf3pLieglIIP559Jru5ktjx35Vfy2WZAElA/exec";
+
+      try {
+        const response = await fetch(uploadUrl, { method: 'POST', body: formData });
+        const text = await response.text();
+        alert('✅ Upload successful!\n' + text);
+      } catch (error) {
+        alert('❌ Upload failed: ' + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
