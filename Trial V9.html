@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Inspection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: white;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+  #formWrapper {
+    width: 210mm;
+    padding: 15mm;
+    background: white;
+    box-sizing: border-box;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  label { font-weight: bold; }
+  .section { margin-bottom: 20px; }
+  .inline-inputs { display: flex; justify-content: space-between; gap: 10px; }
+  input, select {
+    width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+  }
+  .bullet-box {
+    width: 100%; min-height: 80px; border: 1px solid #ccc; border-radius: 4px;
+    padding: 6px 10px; box-sizing: border-box; outline: none;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  table, th, td { border: 1px solid #ccc; }
+  th, td { padding: 6px; text-align: left; }
+  .narrow-input { width: 45%; }
+  .buttons { text-align: center; margin-top: 25px; }
+  button {
+    padding: 10px 20px; margin: 5px; font-weight: bold; border: none; border-radius: 6px;
+    cursor: pointer; background-color: #007bff; color: white;
+  }
+  button:hover { background-color: #0056b3; }
+  .clear-btn { background-color: #dc3545; }
+  .clear-btn:hover { background-color: #a71d2a; }
+  #fileLink { margin-top: 10px; text-align: center; font-weight: bold; }
+  #fileLink a { color: green; text-decoration: none; }
+  #fileLink a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="formWrapper">
+  <h2>Field Inspection</h2>
+
+  <div class="section inline-inputs">
+    <div><label>Contractor's Name:</label><input type="text" id="contractor"></div>
+    <div><label>Project Name:</label><input type="text" id="project"></div>
+    <div><label>Date:</label><input type="date" id="todayDate"></div>
+  </div>
+
+  <div class="section inline-inputs">
+    <div><label>Time of Inspection:</label><input type="time" id="time"></div>
+    <div>
+      <label>Weather:</label>
+      <select id="weather">
+        <option value="">Select</option>
+        <option>Clear</option>
+        <option>Rain</option>
+        <option>Mist</option>
+        <option>Hot</option>
+        <option>Cold</option>
+        <option>Warm</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section inline-inputs">
+    <div class="narrow-input"><label>Number of Supervisors:</label><input type="number" id="sup" min="0"></div>
+    <div class="narrow-input"><label>Number of Skilled Workers:</label><input type="number" id="workers" min="0"></div>
+  </div>
+
+  <div class="section">
+    <label>Equipments:</label>
+    <table>
+      <tr><th>Equipment</th><th>Nos</th></tr>
+      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
+      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
+      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
+      <tr><td><input list="equipList"></td><td><input type="number" min="0"></td></tr>
+    </table>
+    <datalist id="equipList">
+      <option value="Excavator">
+      <option value="Compactor">
+      <option value="Truck">
+    </datalist>
+  </div>
+
+  <div class="section"><label>Location of Inspection:</label><div class="bullet-box" contenteditable="true" id="location"></div></div>
+  <div class="section"><label>Work Performed:</label><div class="bullet-box" contenteditable="true" data-bullets="true" id="work"></div></div>
+  <div class="section"><label>Comments and Actions:</label><div class="bullet-box" contenteditable="true" data-bullets="true" id="comments"></div></div>
+  <div class="section"><label>Issues:</label><div class="bullet-box" contenteditable="true" data-bullets="true" id="issues"></div></div>
+
+  <div class="section narrow-input">
+    <label>Inspected By:</label>
+    <input type="text" id="inspector">
+  </div>
+
+  <div class="buttons">
+    <button onclick="savePDFLocal()">Save PDF</button>
+    <button onclick="saveAndUpload()">Save PDF & Upload</button>
+    <button class="clear-btn" onclick="clearForm()">Clear</button>
+  </div>
+
+  <div id="fileLink"></div>
+</div>
+
+<script>
+// ✅ تعبئة التاريخ تلقائيًا
+document.addEventListener("DOMContentLoaded", () => {
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("todayDate").value = today;
+});
+
+// ✅ نقاط تلقائية في المربعات
+document.querySelectorAll('[data-bullets="true"]').forEach(box => {
+  box.addEventListener('focus', () => {
+    if (box.innerHTML.trim() === '') box.innerHTML = '• ';
+  });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.execCommand('insertHTML', false, '<br>• ');
+    }
+  });
+});
+
+// ✅ حفظ PDF محليًا
+async function savePDFLocal() {
+  const element = document.getElementById('formWrapper');
+  const canvas = await html2canvas(element, { scale: 3, useCORS: true, scrollY: 0 });
+  const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+  const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+  pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pdfHeight);
+  pdf.save('Field_Inspection.pdf');
+}
+
+// ✅ حفظ ورفع PDF
+async function saveAndUpload() {
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxl1We_AjB1vjX0nc0LjnYpxXTP_FcFD1cwqyZN5vLNAx-fuZLesk3Lp5ekUQRzXvDQ/exec";
+
+  const element = document.getElementById('formWrapper');
+  const canvas = await html2canvas(element, { scale: 3, useCORS: true, scrollY: 0 });
+  const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+  const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+  pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pdfHeight);
+
+  // ✅ الطريقة الجديدة لتوليد Base64 بدون خطأ Stack Overflow
+  const pdfArrayBuffer = pdf.output('arraybuffer');
+  const pdfUint8 = new Uint8Array(pdfArrayBuffer);
+  let binary = '';
+  for (let i = 0; i < pdfUint8.length; i++) {
+    binary += String.fromCharCode(pdfUint8[i]);
+  }
+  const pdfBase64 = btoa(binary);
+
+  const fileName = `Field_Inspection_${new Date().toISOString().split('T')[0]}.pdf`;
+
+  try {
+    const res = await fetch(webAppUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: fileName, pdfBase64: pdfBase64 })
+    });
+
+    const result = await res.json();
+    if (result.status === "success") {
+      document.getElementById("fileLink").innerHTML =
+        `✅ File uploaded successfully!<br><a href="${result.fileUrl}" target="_blank">Open in Google Drive</a>`;
+    } else {
+      alert("❌ Upload failed: " + result.message);
+    }
+  } catch (err) {
+    alert("❌ Connection error: " + err.message);
+  }
+}
+
+// ✅ مسح الفورم
+function clearForm() {
+  document.querySelectorAll('input, select').forEach(el => {
+    if (el.type === 'date') el.value = new Date().toISOString().split("T")[0];
+    else if (['time', 'text', 'number'].includes(el.type)) el.value = '';
+    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+  });
+  document.querySelectorAll('.bullet-box').forEach(box => box.innerHTML = '');
+  document.getElementById("fileLink").innerHTML = '';
+}
+</script>
+</body>
+</html>
